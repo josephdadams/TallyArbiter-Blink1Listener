@@ -8,6 +8,7 @@ from blink1.blink1 import Blink1
 import socketio
 import json
 
+devices = []
 device_states = []
 bus_options = []
 
@@ -78,6 +79,11 @@ def reconnect():
 		doBlink(0, 0, 0)
 		time.sleep(.3)
 
+@sio.on('devices')
+def on_devices(data):
+	global devices
+	devices = data
+
 @sio.on('device_states')
 def on_device_states(data):
 	global device_states
@@ -88,8 +94,6 @@ def on_device_states(data):
 def on_bus_options(data):
 	global bus_options
 	bus_options = data
-	print('BUS OPTIONS')
-	print(bus_options)
 
 @sio.on('flash')
 def on_flash():
@@ -124,6 +128,11 @@ def on_reassign(oldDeviceId, newDeviceId):
 	stored_deviceId_file.write(newDeviceId)
 	stored_deviceId_file.close()
 
+def getDeviceById(deviceId):
+	for device in devices:
+		if device['id'] == deviceId:
+			return device
+
 def getBusTypeById(busId):
 	for bus in bus_options:
 		if bus['id'] == busId:
@@ -145,21 +154,20 @@ def processTallyData():
 	priority = 0
 	tallyBus = []
 
-	print(busses)
-
 	for bus in busses:
 		if bus['priority'] > priority:
 			priority = bus['priority']
 			tallyBus = bus
 	
-	print(tallyBus)
-	
 	#this should leave us with a tallyBus object where the highest priority bus is in this object
 	evaluateMode(tallyBus)
 
 def evaluateMode(bus):
+	global deviceId
+	device = getDeviceById(deviceId)
 	if len(bus) > 0:
-		print('the device is in {}'.format(bus))
+		deviceName = device['name']
+		print('{} is in: {}'.format(deviceName,bus['type']))
 		color = hexToRGB(bus['color'])
 		doBlink(color[0], color[1], color[2])
 
