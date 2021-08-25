@@ -1,4 +1,4 @@
-## Tally Arbiter Python Listener
+## Tally Arbiter Blink(1) Listener
 
 from signal import signal, SIGINT
 from sys import exit
@@ -10,8 +10,6 @@ import json
 
 device_states = []
 bus_options = []
-mode_preview = False
-mode_program = False
 
 server = sys.argv[1]
 
@@ -43,7 +41,7 @@ sio = socketio.Client()
 @sio.event
 def connect():
 	print('Connected to Tally Arbiter server:', server, port)
-	sio.emit('bus_options')												# get current bus options
+	sio.emit('bus_options')											# get current bus options
 	sio.emit('device_listen_blink', {'deviceId': deviceId})			# start listening for the device
 	repeatNumber = 2
 	while(repeatNumber):
@@ -90,6 +88,8 @@ def on_device_states(data):
 def on_bus_options(data):
 	global bus_options
 	bus_options = data
+	print('BUS OPTIONS')
+	print(bus_options)
 
 @sio.on('flash')
 def on_flash():
@@ -103,7 +103,7 @@ def on_flash():
 	time.sleep(.5)
 	doBlink(255, 255, 255)
 	time.sleep(.5)
-	evaluateMode()
+	processTallyData()
 
 @sio.on('reassign')
 def on_reassign(oldDeviceId, newDeviceId):
@@ -129,34 +129,46 @@ def getBusTypeById(busId):
 		if bus['id'] == busId:
 			return bus['type']
 
-def processTallyData():
-	global mode_preview
-	global mode_program
-	for device_state in device_states:
-		if getBusTypeById(device_state['busId']) == 'preview':
-			if len(device_state['sources']) > 0:
-				mode_preview = True
-			else:
-				mode_preview = False
-		elif getBusTypeById(device_state['busId']) == 'program':
-			if len(device_state['sources']) > 0:
-				mode_program = True
-			else:
-				mode_program = False
-	evaluateMode()
+def getBusById(busId):
+	for bus in bus_options:
+		if bus['id'] == busId:
+			return bus
 
-def evaluateMode():
-	if (mode_preview == True) and (mode_program == False):		# preview mode, color it green
-		doBlink(0, 255, 0)
-	elif (mode_preview == False) and (mode_program == True):	# program mode, color it red
-		doBlink(255, 0, 0)
-	elif (mode_preview == True) and (mode_program == True):		# preview+program mode, color it yellow
-		doBlink(255, 255, 0)
-	else:														# no source, turn it off
-		doBlink(0, 0, 0)
+def processTallyData():
+	busses = []
+
+	for device_state in device_states:
+		if len(device_state['sources']) > 0:
+			bus = getBusById(device_state['busId'])
+			busses.append(bus)
+	
+	priority = 0
+	tallyBus = []
+
+	print(busses)
+
+	for bus in busses:
+		if bus['priority'] > priority:
+			priority = bus['priority']
+			tallyBus = bus
+	
+	print(tallyBus)
+	
+	#this should leave us with a tallyBus object where the highest priority bus is in this object
+	evaluateMode(tallyBus)
+
+def evaluateMode(bus):
+	if len(bus) > 0:
+		print('the device is in {}'.format(bus))
+		color = hexToRGB(bus['color'])
+		doBlink(color[0], color[1], color[2])
 
 def doBlink(r, g, b):
 	b1.fade_to_rgb(100, r, g, b)
+
+def hexToRGB(hex):
+	hex = hex.lstrip('#')
+	return tuple(int(hex[i:i+2], 16) for i in (0, 2, 4))
 
 try:
 	b1 = Blink1()
