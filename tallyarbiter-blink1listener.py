@@ -16,6 +16,8 @@ from blink1.blink1 import Blink1
 import socketio
 import json
 
+version = '1.1.0'
+
 devices = []
 device_states = []
 bus_options = []
@@ -196,7 +198,7 @@ while(1):
 	try:
 		sio.connect('http://' + server + ':' + port)
 		sio.wait()
-		print('Tally Arbiter Blink(1) Listener Running. Press CTRL-C to exit.')
+		print('Tally Arbiter Blink(1) Listener Running. Version {}. Press CTRL-C to exit.'.format(version))
 		print('Attempting to connect to Tally Arbiter server: ' + server + '(' + port + ')')
 	except KeyboardInterrupt:
 		print('Exiting Tally Arbiter Listener.')
