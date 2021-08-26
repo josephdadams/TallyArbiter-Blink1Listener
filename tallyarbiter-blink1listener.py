@@ -119,6 +119,10 @@ def on_flash():
 	time.sleep(.5)
 	processTallyData()
 
+@sio.on('error')
+def on_error(errorMessage):
+	print(errorMessage)
+
 @sio.on('reassign')
 def on_reassign(oldDeviceId, newDeviceId):
 	print('Reassigning from DeviceID: ' + oldDeviceId + ' to Device ID: ' + newDeviceId)
