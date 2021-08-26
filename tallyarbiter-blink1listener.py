@@ -1,5 +1,13 @@
 ## Tally Arbiter Blink(1) Listener
 
+# File name: tallyarbiter-blink1listener.py
+# Version: 1.1.0
+# Author: Joseph Adams
+# Email: josephdadams@gmail.com
+# Date created: 7/01/2020
+# Date last modified: 8/26/2021
+# Notes: This file is a part of the Tally Arbiter project. For more information, visit tallyarbiter.com
+
 from signal import signal, SIGINT
 from sys import exit
 import sys
@@ -188,7 +196,7 @@ while(1):
 	try:
 		sio.connect('http://' + server + ':' + port)
 		sio.wait()
-		print('Tally Arbiter Listener Running. Press CTRL-C to exit.')
+		print('Tally Arbiter Blink(1) Listener Running. Press CTRL-C to exit.')
 		print('Attempting to connect to Tally Arbiter server: ' + server + '(' + port + ')')
 	except KeyboardInterrupt:
 		print('Exiting Tally Arbiter Listener.')
